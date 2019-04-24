@@ -1,0 +1,67 @@
+version: '2.1'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  config:
+    container_name: config-service
+    env_file: .env
+    build: config
+    ports:
+      - 8888:8888
+
+  registry:
+    container_name: registry-service
+    env_file: .env
+    build: registry
+
+  gateway:
+    container_name: gateway
+    env_file: .env
+    build: gateway
+
+  auth-service:
+    container_name: auth-service
+    env_file: .env
+    build: auth-service
+    ports:
+      - 5000:5000
+  auth-mongodb:
+    container_name: mongodb
+    image: mongo
+    ports:
+     - 25000:27017
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  spend-money-service:
+    container_name: spend-money-service
+    env_file: .env
+    build: spend-money
+    ports:
+      - 6000:6000
+
+  cassandradb:
+    container_name: cassandradb
+    image: "cassandra:3.11.4"
+    ports:
+      - "9042:9042"
+    volumes:
+      - "./scripts/cassandra.sh:/cassandra-init.sh"
+    command: "sh /cassandra-init.sh"
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 50
+    expose:
+      - "9042"
